@@ -149,7 +149,7 @@ export const endMarketSession = async (formData: FormData) => {
   await openContractCall({
     contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS,
     contractName: "prediction-market",
-    functionName: "end-session",
+    functionName: "end-market",
     functionArgs: [Cl.stringUtf8(marketId)],
     network: "devnet",
     appDetails,

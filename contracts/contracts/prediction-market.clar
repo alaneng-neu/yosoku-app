@@ -142,30 +142,42 @@
   )
 )
 
-;; Helper function to calculate and distribute winnings
-(define-private (distribute-winnings (user principal) 
-                   (winning-data {total-pot: uint, winning-pot: uint, winning-side: bool, market-id: (string-utf8 100)}))
+;; Add new data map for winning data
+(define-map market-winning-data
+  (string-utf8 100)  ;; market-id
+  {
+    total-pot: uint,
+    winning-pot: uint,
+    winning-side: bool
+  }
+)
+
+;; Modified helper function that only takes one argument
+(define-private (distribute-single-winner (user principal))
   (let (
+    ;; Get winning data from context
+    (market-id (var-get current-distribution-market))
+    (winning-data (unwrap-panic (map-get? market-winning-data market-id)))
     (bet-info (unwrap-panic (map-get? user-bets 
-      {market-id: (get market-id winning-data), user: user})))
+      {market-id: market-id, user: user})))
   )
     (if (is-eq (get vote bet-info) (get winning-side winning-data))
       (let (
-        ;; Calculate user's proportion of winning pot
         (user-proportion (/ (* (get total-amount bet-info) u100) (get winning-pot winning-data)))
-        ;; Calculate user's winnings from total pot
         (user-winnings (/ (* (get total-pot winning-data) user-proportion) u100))
       )
-        ;; Transfer winnings to user
         (try! (as-contract (stx-transfer? user-winnings tx-sender user)))
         (ok user-winnings))
-      (ok u0)  ;; Return 0 for losing bets
+      (ok u0)
     )
   )
 )
 
-;; Function to end session and distribute winnings
-(define-public (end-session (market-id (string-utf8 100)))
+;; Data var to store current market-id being processed
+(define-data-var current-distribution-market (string-utf8 100) u"")
+
+;; Function to end market and distribute winnings
+(define-public (end-market (market-id (string-utf8 100)))
   (let (
     (market (unwrap! (map-get? markets market-id) ERR-NO-MARKET))
     (current-height stacks-block-height)
@@ -181,27 +193,29 @@
       (total-pot (+ (get yesPot market) (get noPot market)))
       (winning-pot (if yes-wins (get yesPot market) (get noPot market)))
       (all-betters (get betters market))
-      (winning-data {
+    )
+      ;; Store winning data in map
+      (map-set market-winning-data market-id {
         total-pot: total-pot,
         winning-pot: winning-pot,
-        winning-side: yes-wins,
-        market-id: market-id
+        winning-side: yes-wins
       })
-    )
-      ;; Distribute winnings to all betters
-      (map distribute-winnings all-betters (list winning-data))
       
-      ;; Reset market stats
+      ;; Set current market being processed
+      (var-set current-distribution-market market-id)
+      
+      ;; Distribute winnings to all betters
+      (map distribute-single-winner all-betters)
+      
+      ;; Set market to isEnded
       (map-set markets market-id 
         (merge market {
-          yesVoters: u0,
-          noVoters: u0,
-          yesPot: u0,
-          noPot: u0,
-          betters: (list),
           isEnded: true
         })
       )
+      
+      ;; Clear winning data after distribution
+      (map-delete market-winning-data market-id)
       
       ;; Return results
       (ok {

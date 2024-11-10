@@ -51,7 +51,7 @@ const NewMarket: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="pt-16 md:pt-28 h-[calc(100vh-4rem)] flex flex-col justify-center">
+      <div className="pt-16 md:pt-28 h-[calc(100vh-7rem)] flex flex-col justify-center">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader>
             <CardTitle>Create New Event</CardTitle>

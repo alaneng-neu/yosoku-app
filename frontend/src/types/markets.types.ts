@@ -4,7 +4,7 @@ export interface ClarityMarket {
   description: { type: string; value: string };
 
   endSession: { type: string; value: number };
-  isEnded: { type: boolean };
+  isEnded: { type: boolean; value: boolean };
 
   betters: { type: string; value: [] };
   noPot: { type: string; value: number };

@@ -6,7 +6,7 @@ export const marketTransformer = (market: ClarityMarket): Market => {
     name: market.name.value,
     description: market.description.value,
     endSession: market.endSession.value,
-    isEnded: market.isEnded.type,
+    isEnded: market.isEnded.value,
     totalPot: market.noPot.value + market.yesPot.value,
   };
 };
