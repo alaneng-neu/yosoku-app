@@ -152,8 +152,8 @@
   }
 )
 
-;; Modified helper function that only takes one argument
-(define-private (distribute-single-winner (user principal))
+;; Modified helper function that takes both accumulator and current item
+(define-private (distribute-single-winner (user principal) (acc (response uint uint)))
   (let (
     ;; Get winning data from context
     (market-id (var-get current-distribution-market))
@@ -189,9 +189,12 @@
     (asserts! (not (get isEnded market)) ERR-SESSION-ENDED)
     
     (let (
+      (is-tie (is-eq (get yesVoters market) (get noVoters market)))
       (yes-wins (> (get yesVoters market) (get noVoters market)))
       (total-pot (+ (get yesPot market) (get noPot market)))
-      (winning-pot (if yes-wins (get yesPot market) (get noPot market)))
+      (winning-pot (if is-tie 
+                      total-pot  ;; In case of tie, entire pot is "winning pot"
+                      (if yes-wins (get yesPot market) (get noPot market))))
       (all-betters (get betters market))
     )
       ;; Store winning data in map
@@ -204,26 +207,53 @@
       ;; Set current market being processed
       (var-set current-distribution-market market-id)
       
-      ;; Distribute winnings to all betters
-      (map distribute-single-winner all-betters)
+      ;; Process distributions
+      (if is-tie
+          (try! (fold distribute-tie-refund all-betters (ok u0)))
+          (try! (fold distribute-single-winner all-betters (ok u0))))
       
       ;; Set market to isEnded
       (map-set markets market-id 
         (merge market {
           isEnded: true
-        })
-      )
+        }))
       
       ;; Clear winning data after distribution
       (map-delete market-winning-data market-id)
       
-      ;; Return results
-      (ok {
-        yes-won: yes-wins,
-        total-pot: total-pot,
-        winning-pot: winning-pot
-      })
+      ;; Return appropriate response
+      (if is-tie
+          (ok {
+            is-tie: true,
+            yes-won: yes-wins,
+            total-pot: total-pot,
+            winning-pot: total-pot
+          })
+          (ok {
+            is-tie: false,
+            yes-won: yes-wins,
+            total-pot: total-pot,
+            winning-pot: winning-pot
+          })
+      )
     )
+  )
+)
+
+;; New helper function to handle tie refunds
+(define-private (distribute-tie-refund (user principal) (previous-response (response uint uint)))
+  (let (
+    (market-id (var-get current-distribution-market))
+    (bet-info (unwrap! (map-get? user-bets 
+      {market-id: market-id, user: user}) 
+      (err u0)))
+  )
+    ;; Simply return their original bet amount
+    (if (is-ok previous-response)
+        (match (as-contract (stx-transfer? (get total-amount bet-info) tx-sender user))
+            success (ok (+ (unwrap! previous-response (err u0)) (get total-amount bet-info)))
+            error (err u0))
+        previous-response)
   )
 )
 
