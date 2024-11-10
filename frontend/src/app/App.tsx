@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import AppWalletConnectedContext from "./UserWalletConnectedContext";
 
 import Home from "@/pages/Home";
@@ -8,6 +9,7 @@ import NotFound from "@/pages/NotFound";
 const App = () => {
   return (
     <AppWalletConnectedContext>
+      <Toaster />
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />

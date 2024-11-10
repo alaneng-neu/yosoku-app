@@ -39,8 +39,8 @@ export default function NewMarket() {
       formData.append("description", data.description);
       formData.append("end", data.end.toString());
 
-      await createMarket(formData);
-      window.location.href = "/";
+      const result = await createMarket(formData);
+      if (result.success) window.location.href = "/";
     } catch {
       console.error("Failed to create event");
     } finally {
