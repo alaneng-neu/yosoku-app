@@ -5,18 +5,6 @@ import MarketCard from "@/components/MarketCard";
 import { useGetAllMarkets } from "@/hooks/markets.hooks";
 import { Link } from "react-router-dom";
 
-const exampleData = {
-  title: "Does Easy-A become the biggest Web3 app?",
-  options: [
-    { name: "Yes", percentage: 60 },
-    { name: "No", percentage: 40 },
-  ],
-  expirationDate: new Date(),
-  imageUrl:
-    "https://play-lh.googleusercontent.com/L9ua6NBh7Er2r5dT_eTEbsxeAn7ZGf4cwCiY-cU5gl6O_6PLp85XuCjTPTAdQVfe4Qo",
-  pot: "100000000 STX",
-};
-
 const Home = () => {
   const { data, isLoading, isError } = useGetAllMarkets();
 
@@ -26,7 +14,7 @@ const Home = () => {
       <main className="pt-16 md:pt-28 h-[calc(100vh-7rem)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-3xl font-bold">Find the next big market</h1>
-          <MarketHeadliner className="my-8 bg-gray-300" {...exampleData} />
+          <MarketHeadliner />
 
           <InfoSection />
 

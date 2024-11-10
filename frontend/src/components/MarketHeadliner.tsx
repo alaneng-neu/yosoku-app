@@ -5,17 +5,13 @@ import { useGetAllMarkets } from "@/hooks/markets.hooks";
 import { Market } from "@/types/markets.types";
 import { useNavigate } from "react-router-dom";
 
-interface MarketHeadlinerProps {}
-
-const MarketHeadliner: React.FC<MarketHeadlinerProps> = () => {
+const MarketHeadliner: React.FC = () => {
   const { data, isLoading, isError } = useGetAllMarkets();
   const [market, setMarket] = useState<Market | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Fetching data...");
     if (data && data.length > 0) {
-      console.log("Data fetched:", data);
       const highestPotMarket = data.reduce((prev, current) =>
         parseFloat(String(prev.totalPot)) > parseFloat(String(current.totalPot))
           ? prev
@@ -52,7 +48,7 @@ const MarketHeadliner: React.FC<MarketHeadlinerProps> = () => {
         <p className="text-gray-600 mt-2">{market.description}</p>
         <p className="mt-2 text-xl">
           Add to the Current Pot:{" "}
-          <b>{String(market.totalPot).toString()} STX</b>
+          <b>{String(Number(market.totalPot) / 1_000_000).toString()} STX</b>
         </p>
         <p className="mt-2 text-gray-500 text-sm">
           Expires at Block #{String(market.endSession).toString()}
