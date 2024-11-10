@@ -34,7 +34,7 @@ const MarketCard: React.FC<MarketProps> = ({ market }: MarketProps) => {
           <Button
             size="lg"
             variant="outline"
-            className="w-24 font-semibold bg-green-100 text-green-700 border-green-500"
+            className="w-24 font-semibold bg-blue-100 text-blue-700 border-blue-500"
             disabled={market.isEnded || isVoting}
             onClick={() => handleVote("yes")}
           >
