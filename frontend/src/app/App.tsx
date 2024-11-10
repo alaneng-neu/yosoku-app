@@ -6,6 +6,7 @@ import AppContextQuery from "./AppContextQuery";
 import Home from "@/pages/Home";
 import NewMarket from "@/pages/NewMarket";
 import NotFound from "@/pages/NotFound";
+import MarketPage from "@/pages/MarketPage";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/new" element={<NewMarket />} />
+            <Route path="/market/:marketId" element={<MarketPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
