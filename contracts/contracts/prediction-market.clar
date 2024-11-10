@@ -18,8 +18,8 @@
     noVoters: uint,   ;; Count of unique no voters
     yesPot: uint,   ;; Total STX bet on yes
     noPot: uint,    ;; Total STX bet on no
-    startSession: uint, 
     endSession: uint,
+    isEnded: bool,  ;; Flag to indicate if session has ended
     betters: (list 50 principal)  ;; List of unique betters for this event
   }
 )
@@ -38,7 +38,6 @@
   (event-id (string-utf8 100))
   (name (string-utf8 100))
   (description (string-utf8 100))
-  (start-height uint)
   (end-height uint)
 )
   (begin
@@ -52,8 +51,8 @@
       noVoters: u0,
       yesPot: u0,
       noPot: u0,
-      startSession: start-height,
-      endSession: end-height,
+      endSession: (+ stacks-block-height end-height),
+      isEnded: false,
       betters: (list)
     }))
   )
@@ -67,8 +66,8 @@
     (existing-bet (map-get? user-bets {event-id: event-id, user: tx-sender}))
   )
     ;; Check if session is active
-    (asserts! (>= current-height (get startSession event)) ERR-SESSION-NOT-STARTED)
     (asserts! (<= current-height (get endSession event)) ERR-SESSION-ENDED)
+    (asserts! (not (get isEnded event)) ERR-SESSION-ENDED)
     
     ;; If user has already bet, check they're not betting on opposite side
     (if (is-some existing-bet)
@@ -165,7 +164,7 @@
     (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
     
     ;; Check if session has ended
-    (asserts! (<= current-height (get endSession event)) ERR-SESSION-ENDED)
+    (asserts! (not (get isEnded event)) ERR-SESSION-ENDED)
     
     (let (
       (yes-wins (> (get yesVoters event) (get noVoters event)))
@@ -189,7 +188,8 @@
           noVoters: u0,
           yesPot: u0,
           noPot: u0,
-          betters: (list)
+          betters: (list),
+          isEnded: true
         })
       )
       
