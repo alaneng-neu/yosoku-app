@@ -3,7 +3,6 @@ import Navbar from "@/components/Navbar";
 import InfoSection from "@/components/InfoSection";
 import MarketCard from "@/components/MarketCard";
 import { useGetAllMarkets } from "@/hooks/markets.hooks";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const exampleData = {

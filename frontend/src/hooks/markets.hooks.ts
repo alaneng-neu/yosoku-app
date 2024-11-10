@@ -12,6 +12,7 @@ import {
   ClarityValue,
   fetchCallReadOnlyFunction,
   ListCV,
+  PostConditionMode,
 } from "@stacks/transactions";
 import {
   useMutation,
@@ -112,7 +113,7 @@ export const betOnMarket = async (formData: FormData) => {
     functionArgs: [
       Cl.stringUtf8(marketId),
       Cl.bool(yesVote),
-      Cl.uint(betAmount),
+      Cl.uint(Number(betAmount) * 1_000_000),
     ],
     network: "devnet",
     appDetails,
@@ -122,6 +123,7 @@ export const betOnMarket = async (formData: FormData) => {
     onCancel: () => {
       throw new Error("Transaction was cancelled");
     },
+    postConditionMode: PostConditionMode.Allow,
   });
 };
 
@@ -159,6 +161,7 @@ export const endMarketSession = async (formData: FormData) => {
     onCancel: () => {
       throw new Error("Transaction was cancelled");
     },
+    postConditionMode: PostConditionMode.Allow,
   });
 };
 

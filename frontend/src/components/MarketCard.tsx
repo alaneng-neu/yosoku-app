@@ -67,7 +67,7 @@ const MarketCard: React.FC<MarketProps> = ({
         <div className="flex justify-between items-center pt-2 border-t">
           <span className="text-sm text-muted-foreground">Total Volume</span>
           <span className="font-mono font-medium">
-            {String(market.totalPot).toString()} STX
+            {String(Number(market.totalPot) / 1_000_000).toString()} STX
           </span>
         </div>
       </CardContent>
