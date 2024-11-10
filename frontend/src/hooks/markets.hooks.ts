@@ -8,7 +8,7 @@ import {
   fetchCallReadOnlyFunction,
   ListCV,
 } from "@stacks/transactions";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const getAllMarkets = async (): Promise<Market[]> => {
   const network = "devnet";
@@ -32,7 +32,6 @@ const getAllMarkets = async (): Promise<Market[]> => {
       (market as unknown as { type: string; value: ClarityMarket }).value
     )
   );
-  console.log(markets);
   return markets;
 };
 
@@ -48,41 +47,43 @@ export const createMarket = async (formData: FormData) => {
   const description = formData.get("description") as string;
   const end = parseInt(formData.get("end") as string);
 
-  const randomId = Math.floor(Math.random() * 100000000).toString();
-
   if (!name || !description || !end)
     throw new Error("Name, description, and end are required");
 
-  try {
-    let result = { success: false };
+  await openContractCall({
+    contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS,
+    contractName: "prediction-market",
+    functionName: "add-market",
+    functionArgs: [
+      Cl.stringUtf8(name),
+      Cl.stringUtf8(description),
+      Cl.uint(end),
+    ],
+    network: "devnet",
+    appDetails: {
+      name: "Stacks Prediction Market",
+      icon: window.location.origin + "/vite.svg",
+    },
+    onFinish: ({ txId }: { txId: string }) => {
+      console.log(txId);
+    },
+    onCancel: () => {
+      throw new Error("Transaction was cancelled");
+    },
+  });
+};
 
-    await openContractCall({
-      contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS,
-      contractName: "prediction-market",
-      functionName: "add-market",
-      functionArgs: [
-        Cl.stringUtf8(randomId),
-        Cl.stringUtf8(name),
-        Cl.stringUtf8(description),
-        Cl.uint(end),
-      ],
-      network: "devnet",
-      appDetails: {
-        name: "Stacks Prediction Market",
-        icon: window.location.origin + "/vite.svg",
-      },
-      onFinish: ({ txId }: { txId: string }) => {
-        console.log(txId);
-        result = { success: true };
-      },
-      onCancel: () => {
-        throw new Error("Transaction was cancelled");
-      },
-    });
-
-    return result;
-  } catch (e) {
-    toastError((e as Error).message);
-    return { success: false };
-  }
+export const useCreateMarket = () => {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, FormData>({
+    mutationKey: ["markets"],
+    mutationFn: createMarket,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["markets"] });
+      window.location.href = "/";
+    },
+    onError: (error) => {
+      toastError(error.message);
+    },
+  });
 };

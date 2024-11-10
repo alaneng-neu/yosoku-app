@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createMarket } from "@/hooks/markets.hooks";
+import { useCreateMarket } from "@/hooks/markets.hooks";
 import Navbar from "@/components/Navbar";
 
 const eventSchema = z.object({
@@ -18,8 +18,9 @@ const eventSchema = z.object({
 
 type EventFormData = z.infer<typeof eventSchema>;
 
-export default function NewMarket() {
+const NewMarket: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutateAsync: createMarket } = useCreateMarket();
 
   const {
     register,
@@ -39,8 +40,7 @@ export default function NewMarket() {
       formData.append("description", data.description);
       formData.append("end", data.end.toString());
 
-      const result = await createMarket(formData);
-      if (result.success) window.location.href = "/";
+      await createMarket(formData);
     } catch {
       console.error("Failed to create event");
     } finally {
@@ -109,4 +109,6 @@ export default function NewMarket() {
       </div>
     </>
   );
-}
+};
+
+export default NewMarket;

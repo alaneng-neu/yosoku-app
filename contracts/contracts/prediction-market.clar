@@ -38,30 +38,33 @@
 
 ;; Function to add a new market to the markets mapping
 (define-public (add-market 
-  (market-id (string-utf8 100))
   (name (string-utf8 100))
   (description (string-utf8 100))
   (end-height uint)
 )
   (begin
-    (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
-    (asserts! (is-none (map-get? markets market-id)) ERR-MARKET-EXISTS)
-    
-    (map-set markets market-id {
-      name: name,
-      description: description,
-      yesVoters: u0,
-      noVoters: u0,
-      yesPot: u0,
-      noPot: u0,
-      endSession: (+ stacks-block-height end-height),
-      isEnded: false,
-      betters: (list)
-    })
-    ;; Add market-id to market-ids list
-    (var-set market-ids 
-      (unwrap-panic (as-max-len? (append (var-get market-ids) market-id) u100)))
-    (ok true)
+    (let ((current-market-count (len (var-get market-ids)))
+          (market-id (int-to-utf8 (+ current-market-count u1))))
+      (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
+      (asserts! (is-none (map-get? markets market-id)) ERR-MARKET-EXISTS)
+
+      (map-set markets market-id {
+        name: name,
+        description: description,
+        yesVoters: u0,
+        noVoters: u0,
+        yesPot: u0,
+        noPot: u0,
+        endSession: (+ stacks-block-height end-height),
+        isEnded: false,
+        betters: (list)
+      })
+
+      ;; Add market-id to market-ids list
+      (var-set market-ids 
+        (unwrap-panic (as-max-len? (append (var-get market-ids) market-id) u100)))
+      (ok market-id)
+    )
   )
 )
 
