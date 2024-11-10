@@ -2,30 +2,30 @@
 const InfoSection = () => {
   const items = [
     {
-      icon: "🏛️",
-      title: "The first decentralized smart contract platform on Bitcoin",
-      description: "Build secure, Bitcoin-secured applications with Stacks.",
+      icon: "🤝",
+      title: "The first community-driven prediction platform on Bitcoin",
+      description:
+        "Make predictions with friends and the community, all secured by Bitcoin through Stacks.",
     },
     {
-      icon: "🚀",
-      title: "Trade tokens and assets with high liquidity and no fees",
+      icon: "📈",
+      title: "Predict community trends and outcomes with ease",
       description:
-        "Access Stacks-based markets for trading tokens and NFTs seamlessly.",
+        "Join Stacks-based markets to predict outcomes on community-driven topics and events.",
     },
     {
-      icon: "🔒",
-      title: "Enhanced security through Bitcoin",
+      icon: "🛡️",
+      title: "Community-focused security through Bitcoin",
       description:
-        "Benefit from the security of Bitcoin while leveraging Stacks’ smart contracts.",
+        "Enjoy a secure experience backed by Bitcoin while participating in community-centered predictions.",
     },
     {
-      icon: "💰",
-      title: "Get started for free and fund your account easily",
+      icon: "🎉",
+      title: "Get started for free and connect with others",
       description:
-        "Fund your account with Stacks (STX), Bitcoin, or other supported assets.",
+        "Fund your account with Stacks (STX) or Bitcoin and start predicting within the community.",
     },
   ];
-
   return (
     <div className="flex flex-col md:flex-row justify-around my-8 bg-gray-100 p-4 rounded-lg">
       {items.map((item, index) => (

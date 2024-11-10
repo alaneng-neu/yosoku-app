@@ -128,8 +128,10 @@ export default function MarketPage() {
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full",
-                      betSide === 1 && "shadow-md shadow-inner"
+                      "w-full transition duration-200 ease-in-out",
+                      betSide === 1
+                        ? "shadow-md shadow-inner bg-blue-100 border-blue-500 text-blue-700 font-semibold"
+                        : "hover:bg-blue-50"
                     )}
                     disabled={market.isEnded}
                     onClick={() => setBetSide(1)}
@@ -139,8 +141,10 @@ export default function MarketPage() {
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full",
-                      betSide === 0 && "shadow-md shadow-inner"
+                      "w-full transition duration-200 ease-in-out",
+                      betSide === 0
+                        ? "shadow-md shadow-inner bg-red-100 border-red-500 text-red-700 font-semibold"
+                        : "hover:bg-red-50"
                     )}
                     disabled={market.isEnded}
                     onClick={() => setBetSide(0)}
