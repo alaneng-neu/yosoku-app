@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Market } from "@/types/markets.types";
@@ -12,30 +11,14 @@ const MarketCard: React.FC<MarketProps> = ({
   market,
   isLoading,
 }: MarketProps) => {
-  const [isVoting, setIsVoting] = useState(false);
-
-  const onVote = (id: string, vote: string) => {
-    // TODO
-  };
-
   if (!market || isLoading)
     return (
       <Card className="w-full max-w-xl">
         <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center rounded-lg">
           <div className="loader"></div>
-          {/* Placeholder for loader animation */}
         </div>
       </Card>
     );
-
-  const handleVote = async (vote: "yes" | "no") => {
-    setIsVoting(true);
-    try {
-      await onVote(market.id, vote);
-    } finally {
-      setIsVoting(false);
-    }
-  };
 
   return (
     <Card className="w-full max-w-xl">
@@ -49,8 +32,6 @@ const MarketCard: React.FC<MarketProps> = ({
             size="lg"
             variant="outline"
             className="w-24 font-semibold bg-blue-100 text-blue-700 border-blue-500"
-            disabled={market.isEnded || isVoting}
-            onClick={() => handleVote("yes")}
           >
             Yes
           </Button>
@@ -58,8 +39,6 @@ const MarketCard: React.FC<MarketProps> = ({
             size="lg"
             variant="outline"
             className="w-24 font-semibold bg-red-100 text-red-700 border-red-500"
-            disabled={market.isEnded || isVoting}
-            onClick={() => handleVote("no")}
           >
             No
           </Button>
