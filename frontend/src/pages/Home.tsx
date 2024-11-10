@@ -1,5 +1,6 @@
 import EventHeadliner from "@/components/EventHeadliner";
 import Navbar from "@/components/Navbar";
+import { useGetAllMarkets } from "@/hooks/markets.hooks";
 
 const exampleData = {
   title: "Who comes first in FSAE?",
@@ -13,6 +14,8 @@ const exampleData = {
 };
 
 const Home = () => {
+  const events = useGetAllMarkets();
+
   return (
     <div>
       <Navbar />
