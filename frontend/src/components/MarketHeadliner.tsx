@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 
-interface EventHeadlinerProps {
+interface MarketHeadlinerProps {
   className?: string;
   title: string;
   options: {
@@ -14,7 +14,7 @@ interface EventHeadlinerProps {
   pot: string;
 }
 
-const EventHeadliner: React.FC<EventHeadlinerProps> = ({
+const MarketHeadliner: React.FC<MarketHeadlinerProps> = ({
   className,
   title,
   options,
@@ -31,7 +31,8 @@ const EventHeadliner: React.FC<EventHeadlinerProps> = ({
       className={cn(
         "w-full rounded-lg shadow-slate-300 shadow-md p-6 flex flex-col sm:flex-row",
         className
-      )}>
+      )}
+    >
       <div className="flex-initial mb-4 sm:mb-0 sm:w-1/3 md:max-w-[150px] md:flex md:flex-col md:justify-center">
         <img
           src={imageUrl}
@@ -68,7 +69,8 @@ const EventHeadliner: React.FC<EventHeadlinerProps> = ({
                 key={index}
                 onClick={() => onVote(index)}
                 className="w-full"
-                variant="outline">
+                variant="outline"
+              >
                 Vote for {option.name}
               </Button>
             ))}
@@ -79,4 +81,4 @@ const EventHeadliner: React.FC<EventHeadlinerProps> = ({
   );
 };
 
-export default EventHeadliner;
+export default MarketHeadliner;
