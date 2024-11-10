@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Market } from "@/types/markets.types";
 import {
   useBetOnMarket,
+  useCurrentStacksBlock,
   useEndMarketSession,
   useGetAllMarkets,
 } from "@/hooks/markets.hooks";
@@ -23,6 +24,7 @@ export default function MarketPage() {
   const [betAmount, setBetAmount] = useState(1);
   const [betSide, setBetSide] = useState<1 | 0>(1);
   const { mutateAsync: bet } = useBetOnMarket();
+  const { data: currentBlockHeight } = useCurrentStacksBlock();
 
   const userSession = useCurrentUserSession();
 
@@ -33,7 +35,8 @@ export default function MarketPage() {
     if (market) setMarket(market);
   }, [data, marketId]);
 
-  if (!marketId || !market || isLoading || isError) return <div>Loading</div>;
+  if (!marketId || !market || !currentBlockHeight || isLoading || isError)
+    return <div>Loading</div>;
 
   const handleEndMarketSession = async () => {
     try {
@@ -62,6 +65,9 @@ export default function MarketPage() {
     }
   };
 
+  const isMarketEnded =
+    market.isEnded || currentBlockHeight >= market.endSession;
+
   return (
     <div>
       <Navbar />
@@ -86,7 +92,7 @@ export default function MarketPage() {
             <CardHeader>
               <CardTitle>Market Stats</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-4 gap-4">
               <div className="flex flex-col items-center">
                 <Clock className="h-5 w-5 mb-2 text-muted-foreground" />
                 <span className="text-sm font-medium">Ends at Block</span>
@@ -95,10 +101,19 @@ export default function MarketPage() {
                 </span>
               </div>
               <div className="flex flex-col items-center">
+                <Clock className="h-5 w-5 mb-2 text-muted-foreground" />
+                <span className="text-sm font-medium">Blocks Remaining</span>
+                <span className="text-xs text-muted-foreground">
+                  {String(
+                    Math.max(0, Number(market.endSession) - currentBlockHeight)
+                  ).toString()}
+                </span>
+              </div>
+              <div className="flex flex-col items-center">
                 <Users className="h-5 w-5 mb-2 text-muted-foreground" />
                 <span className="text-sm font-medium">Status</span>
                 <span className="text-xs text-muted-foreground">
-                  {market.isEnded ? "Ended" : "Active"}
+                  {isMarketEnded ? "Ended" : "Active"}
                 </span>
               </div>
               <div className="flex flex-col items-center">
@@ -139,7 +154,7 @@ export default function MarketPage() {
                         ? "shadow-md shadow-inner bg-blue-100 border-blue-500 text-blue-700 font-semibold"
                         : "hover:bg-blue-50"
                     )}
-                    disabled={market.isEnded}
+                    disabled={isMarketEnded}
                     onClick={() => setBetSide(1)}>
                     Yes
                   </Button>
@@ -151,7 +166,7 @@ export default function MarketPage() {
                         ? "shadow-md shadow-inner bg-red-100 border-red-500 text-red-700 font-semibold"
                         : "hover:bg-red-50"
                     )}
-                    disabled={market.isEnded}
+                    disabled={isMarketEnded}
                     onClick={() => setBetSide(0)}>
                     No
                   </Button>
@@ -161,7 +176,7 @@ export default function MarketPage() {
               <Button
                 className="w-full"
                 size="lg"
-                disabled={market.isEnded || Number(betAmount) < 1}
+                disabled={isMarketEnded || Number(betAmount) < 1}
                 onClick={handleBet}>
                 Submit
               </Button>

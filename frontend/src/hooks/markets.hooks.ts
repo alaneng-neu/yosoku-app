@@ -21,6 +21,21 @@ import {
   useQueryClient,
   UseQueryResult,
 } from "@tanstack/react-query";
+import axios, { AxiosError } from "axios";
+
+const getCurrentStacksBlock = async (): Promise<number> => {
+  const response = await axios.get(
+    `${import.meta.env.VITE_STACKS_API_URL}extended`
+  );
+  return response.data.chain_tip.block_height;
+};
+
+export const useCurrentStacksBlock = () => {
+  return useQuery<number, AxiosError>({
+    queryKey: ["block"],
+    queryFn: getCurrentStacksBlock,
+  });
+};
 
 const getAllMarkets = async (): Promise<Market[]> => {
   const network = "devnet";
