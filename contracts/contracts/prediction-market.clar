@@ -33,7 +33,10 @@
 ;; Principal who can add events and end sessions
 (define-constant contract-owner tx-sender)
 
-;; function to add a new event to the events mapping
+;; Data variable to store event IDs
+(define-data-var event-ids (list 100 (string-utf8 100)) (list))
+
+;; Function to add a new event to the events mapping
 (define-public (add-event 
   (event-id (string-utf8 100))
   (name (string-utf8 100))
@@ -44,7 +47,7 @@
     (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
     (asserts! (is-none (map-get? events event-id)) ERR-EVENT-EXISTS)
     
-    (ok (map-set events event-id {
+    (map-set events event-id {
       name: name,
       description: description,
       yesVoters: u0,
@@ -54,7 +57,11 @@
       endSession: (+ stacks-block-height end-height),
       isEnded: false,
       betters: (list)
-    }))
+    })
+    ;; Add event-id to event-ids list
+    (var-set event-ids 
+      (unwrap-panic (as-max-len? (append (var-get event-ids) event-id) u100)))
+    (ok true)
   )
 )
 
@@ -203,11 +210,31 @@
   )
 )
 
-;; Read-only functions
+;; Read-only function to get a specific event
 (define-read-only (get-event (event-id (string-utf8 100)))
   (map-get? events event-id)
 )
 
+;; Read-only function to get a user's bet on an event
 (define-read-only (get-user-bet (event-id (string-utf8 100)) (user principal))
   (map-get? user-bets {event-id: event-id, user: user})
+)
+
+;; Private function to check if an event is not ended
+(define-private (event-not-ended? (event-id (string-utf8 100)))
+  (let ((event (unwrap-panic (map-get? events event-id))))
+    (not (get isEnded event))
+  )
+)
+
+;; Private function to get event data
+(define-private (get-event-data (event-id (string-utf8 100)))
+  (unwrap-panic (map-get? events event-id))
+)
+
+;; Function to get all current events that are not ended
+(define-read-only (get-current-events)
+  (let ((current-event-ids (filter event-not-ended? (var-get event-ids))))
+    (map get-event-data current-event-ids)
+  )
 )
