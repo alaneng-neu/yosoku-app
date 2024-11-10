@@ -1,6 +1,6 @@
 import { UserSession } from "@stacks/connect";
 import { createContext, ReactNode } from "react";
-import { userSession } from "../utils/UserSession";
+import { userSession } from "../utils/user.utils";
 
 export const WalletConnectedContext = createContext<UserSession | undefined>(
   undefined
