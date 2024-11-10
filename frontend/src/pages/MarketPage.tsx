@@ -5,15 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Market } from "@/types/markets.types";
-import { useEndMarketSession, useGetAllMarkets } from "@/hooks/markets.hooks";
+import {
+  useBetOnMarket,
+  useEndMarketSession,
+  useGetAllMarkets,
+} from "@/hooks/markets.hooks";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
+import { cn } from "@/lib/utils";
 
 export default function MarketPage() {
   const { data, isLoading, isError } = useGetAllMarkets();
   const { marketId } = useParams();
   const { mutateAsync: endMarketSession } = useEndMarketSession();
+  const [betAmount, setBetAmount] = useState(1);
+  const [betSide, setBetSide] = useState<1 | 0>(1);
+  const { mutateAsync: bet } = useBetOnMarket();
 
   const [market, setMarket] = useState<Market | null>(null);
 
@@ -30,6 +38,19 @@ export default function MarketPage() {
       formData.append("marketId", marketId);
 
       await endMarketSession(formData);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleBet = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("marketId", marketId);
+      formData.append("yesVote", betSide.toString());
+      formData.append("betAmount", betAmount.toString());
+
+      await bet(formData);
     } catch (e) {
       console.error(e);
     }
@@ -96,7 +117,9 @@ export default function MarketPage() {
                   id="amount"
                   type="number"
                   placeholder="Enter amount"
-                  min="0"
+                  min="1"
+                  value={String(betAmount)}
+                  onChange={(e) => setBetAmount(Number(e.target.value))}
                 />
               </div>
               <div className="space-y-2">
@@ -104,24 +127,35 @@ export default function MarketPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className={cn(
+                      "w-full",
+                      betSide === 1 && "shadow-md shadow-inner"
+                    )}
                     disabled={market.isEnded}
-                    //   onClick={() => market.onTrade && market.onTrade(id, "yes", 0)}
+                    onClick={() => setBetSide(1)}
                   >
                     Yes
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className={cn(
+                      "w-full",
+                      betSide === 0 && "shadow-md shadow-inner"
+                    )}
                     disabled={market.isEnded}
-                    //   onClick={() => market.onTrade && market.onTrade(id, "no", 0)}
+                    onClick={() => setBetSide(0)}
                   >
                     No
                   </Button>
                 </div>
               </div>
               <Separator />
-              <Button className="w-full" size="lg" disabled={market.isEnded}>
+              <Button
+                className="w-full"
+                size="lg"
+                disabled={market.isEnded || Number(betAmount) < 1}
+                onClick={handleBet}
+              >
                 Submit
               </Button>
             </CardContent>
