@@ -1,3 +1,5 @@
+import { marketTransformer } from "@/transformers/markets.transformers";
+import { ClarityMarket, Market } from "@/types/markets.types";
 import { toastError } from "@/utils/toast.utils";
 import { openContractCall } from "@stacks/connect";
 import {
@@ -6,8 +8,9 @@ import {
   fetchCallReadOnlyFunction,
   ListCV,
 } from "@stacks/transactions";
+import { useQuery } from "@tanstack/react-query";
 
-export const useGetAllMarkets = async () => {
+const getAllMarkets = async (): Promise<Market[]> => {
   const network = "devnet";
 
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
@@ -24,8 +27,20 @@ export const useGetAllMarkets = async () => {
   });
 
   const events = call as ListCV;
-  console.log(events);
-  return events;
+  const markets = events.value.map((market) =>
+    marketTransformer(
+      (market as unknown as { type: string; value: ClarityMarket }).value
+    )
+  );
+  console.log(markets);
+  return markets;
+};
+
+export const useGetAllMarkets = () => {
+  return useQuery<Market[], Error>({
+    queryKey: ["markets"],
+    queryFn: getAllMarkets,
+  });
 };
 
 export const createMarket = async (formData: FormData) => {

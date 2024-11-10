@@ -1,4 +1,5 @@
 export interface ClarityMarket {
+  marketId: { type: string; value: string };
   name: { type: string; value: string };
   description: { type: string; value: string };
 

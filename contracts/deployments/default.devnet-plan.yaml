@@ -11,7 +11,7 @@ plan:
         - contract-publish:
             contract-name: prediction-market
             expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-            cost: 81030
+            cost: 85740
             path: contracts/prediction-market.clar
             anchor-block-only: true
             clarity-version: 3

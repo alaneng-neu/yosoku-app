@@ -227,9 +227,23 @@
   )
 )
 
-;; Private function to get market data
+;; Private function to get market data with market-id included
 (define-private (get-market-data (market-id (string-utf8 100)))
-  (unwrap-panic (map-get? markets market-id))
+  (let ((market (unwrap-panic (map-get? markets market-id))))
+    ;; Return market data along with market-id
+    {
+      marketId: market-id,
+      name: (get name market),
+      description: (get description market),
+      yesVoters: (get yesVoters market),
+      noVoters: (get noVoters market),
+      yesPot: (get yesPot market),
+      noPot: (get noPot market),
+      endSession: (get endSession market),
+      isEnded: (get isEnded market),
+      betters: (get betters market)
+    }
+  )
 )
 
 ;; Function to get all current markets that are not ended

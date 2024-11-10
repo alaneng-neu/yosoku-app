@@ -4,15 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Market } from "@/types/markets.types";
 
 interface MarketProps {
-  market: Market;
+  market?: Market;
+  isLoading?: boolean;
 }
 
-const MarketCard: React.FC<MarketProps> = ({ market }: MarketProps) => {
+const MarketCard: React.FC<MarketProps> = ({
+  market,
+  isLoading,
+}: MarketProps) => {
   const [isVoting, setIsVoting] = useState(false);
 
   const onVote = (id: string, vote: string) => {
     // TODO
   };
+
+  if (!market || isLoading)
+    return (
+      <Card className="w-full max-w-xl">
+        <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center rounded-lg">
+          <div className="loader"></div>
+          {/* Placeholder for loader animation */}
+        </div>
+      </Card>
+    );
 
   const handleVote = async (vote: "yes" | "no") => {
     setIsVoting(true);
@@ -52,7 +66,9 @@ const MarketCard: React.FC<MarketProps> = ({ market }: MarketProps) => {
         </div>
         <div className="flex justify-between items-center pt-2 border-t">
           <span className="text-sm text-muted-foreground">Total Volume</span>
-          <span className="font-mono font-medium">{market.totalPot} STX</span>
+          <span className="font-mono font-medium">
+            {String(market.totalPot).toString()} STX
+          </span>
         </div>
       </CardContent>
     </Card>
