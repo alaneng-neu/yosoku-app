@@ -1,6 +1,6 @@
 ;; Error codes
-(define-constant ERR-EVENT-EXISTS (err u100))
-(define-constant ERR-NO-EVENT (err u101))
+(define-constant ERR-MARKET-EXISTS (err u100))
+(define-constant ERR-NO-MARKET (err u101))
 (define-constant ERR-SESSION-NOT-STARTED (err u102))
 (define-constant ERR-SESSION-ENDED (err u103))
 (define-constant ERR-INSUFFICIENT-FUNDS (err u104))
@@ -9,7 +9,7 @@
 (define-constant ERR-OPPOSITE-SIDE-BET (err u109))
 
 ;; Data maps
-(define-map events 
+(define-map markets 
   (string-utf8 100) 
   { 
     name: (string-utf8 100), 
@@ -20,34 +20,34 @@
     noPot: uint,    ;; Total STX bet on no
     endSession: uint,
     isEnded: bool,  ;; Flag to indicate if session has ended
-    betters: (list 50 principal)  ;; List of unique betters for this event
+    betters: (list 50 principal)  ;; List of unique betters for this market
   }
 )
 
 ;; Track bets and votes together
 (define-map user-bets 
-  { event-id: (string-utf8 100), user: principal }
+  { market-id: (string-utf8 100), user: principal }
   { total-amount: uint, vote: bool, has-voted: bool }
 )
 
-;; Principal who can add events and end sessions
+;; Principal who can add markets and end sessions
 (define-constant contract-owner tx-sender)
 
-;; Data variable to store event IDs
-(define-data-var event-ids (list 100 (string-utf8 100)) (list))
+;; Data variable to store market IDs
+(define-data-var market-ids (list 100 (string-utf8 100)) (list))
 
-;; Function to add a new event to the events mapping
-(define-public (add-event 
-  (event-id (string-utf8 100))
+;; Function to add a new market to the markets mapping
+(define-public (add-market 
+  (market-id (string-utf8 100))
   (name (string-utf8 100))
   (description (string-utf8 100))
   (end-height uint)
 )
   (begin
     (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
-    (asserts! (is-none (map-get? events event-id)) ERR-EVENT-EXISTS)
+    (asserts! (is-none (map-get? markets market-id)) ERR-MARKET-EXISTS)
     
-    (map-set events event-id {
+    (map-set markets market-id {
       name: name,
       description: description,
       yesVoters: u0,
@@ -58,23 +58,23 @@
       isEnded: false,
       betters: (list)
     })
-    ;; Add event-id to event-ids list
-    (var-set event-ids 
-      (unwrap-panic (as-max-len? (append (var-get event-ids) event-id) u100)))
+    ;; Add market-id to market-ids list
+    (var-set market-ids 
+      (unwrap-panic (as-max-len? (append (var-get market-ids) market-id) u100)))
     (ok true)
   )
 )
 
 ;; Combined function for betting and voting
-(define-public (bet (event-id (string-utf8 100)) (yes-vote bool) (bet-amount uint))
+(define-public (bet (market-id (string-utf8 100)) (yes-vote bool) (bet-amount uint))
   (let (
-    (event (unwrap! (map-get? events event-id) ERR-NO-EVENT))
+    (market (unwrap! (map-get? markets market-id) ERR-NO-MARKET))
     (current-height stacks-block-height)
-    (existing-bet (map-get? user-bets {event-id: event-id, user: tx-sender}))
+    (existing-bet (map-get? user-bets {market-id: market-id, user: tx-sender}))
   )
     ;; Check if session is active
-    (asserts! (<= current-height (get endSession event)) ERR-SESSION-ENDED)
-    (asserts! (not (get isEnded event)) ERR-SESSION-ENDED)
+    (asserts! (<= current-height (get endSession market)) ERR-SESSION-ENDED)
+    (asserts! (not (get isEnded market)) ERR-SESSION-ENDED)
     
     ;; If user has already bet, check they're not betting on opposite side
     (if (is-some existing-bet)
@@ -85,7 +85,7 @@
     ;; Transfer bet amount
     (try! (stx-transfer? bet-amount tx-sender (as-contract tx-sender)))
     
-    ;; Update event totals and user bet record
+    ;; Update market totals and user bet record
     (if (is-some existing-bet)
       ;; User has bet before - just add to their amount
       (let (
@@ -94,43 +94,43 @@
         (new-amount (+ (get total-amount prev-bet) bet-amount))
       )
         ;; Update total pots
-        (map-set events event-id 
-          (merge event 
+        (map-set markets market-id 
+          (merge market 
             (if yes-vote
-              {yesPot: (+ (get yesPot event) bet-amount),
-               noPot: (get noPot event)}
-              {yesPot: (get yesPot event),
-               noPot: (+ (get noPot event) bet-amount)}
+              {yesPot: (+ (get yesPot market) bet-amount),
+               noPot: (get noPot market)}
+              {yesPot: (get yesPot market),
+               noPot: (+ (get noPot market) bet-amount)}
             )
           ))
         ;; Update user's total bet amount
         (ok (map-set user-bets 
-          {event-id: event-id, user: tx-sender} 
+          {market-id: market-id, user: tx-sender} 
           {total-amount: new-amount, 
            vote: prev-vote,
            has-voted: (get has-voted prev-bet)}))
       )
       ;; First time betting - add vote and amount
       (begin
-        ;; Update event totals and add better to list
-        (map-set events event-id 
-          (merge event 
+        ;; Update market totals and add better to list
+        (map-set markets market-id 
+          (merge market 
             (if yes-vote
-              {yesPot: (+ (get yesPot event) bet-amount),
-               yesVoters: (+ (get yesVoters event) u1),
-               noPot: (get noPot event),
-               noVoters: (get noVoters event),
-               betters: (unwrap-panic (as-max-len? (append (get betters event) tx-sender) u50))}
-              {yesPot: (get yesPot event),
-               yesVoters: (get yesVoters event),
-               noPot: (+ (get noPot event) bet-amount),
-               noVoters: (+ (get noVoters event) u1),
-               betters: (unwrap-panic (as-max-len? (append (get betters event) tx-sender) u50))}
+              {yesPot: (+ (get yesPot market) bet-amount),
+               yesVoters: (+ (get yesVoters market) u1),
+               noPot: (get noPot market),
+               noVoters: (get noVoters market),
+               betters: (unwrap-panic (as-max-len? (append (get betters market) tx-sender) u50))}
+              {yesPot: (get yesPot market),
+               yesVoters: (get yesVoters market),
+               noPot: (+ (get noPot market) bet-amount),
+               noVoters: (+ (get noVoters market) u1),
+               betters: (unwrap-panic (as-max-len? (append (get betters market) tx-sender) u50))}
             )
           ))
         ;; Record new bet and vote
         (ok (map-set user-bets 
-          {event-id: event-id, user: tx-sender} 
+          {market-id: market-id, user: tx-sender} 
           {total-amount: bet-amount, 
            vote: yes-vote,
            has-voted: true}))
@@ -141,10 +141,10 @@
 
 ;; Helper function to calculate and distribute winnings
 (define-private (distribute-winnings (user principal) 
-                   (winning-data {total-pot: uint, winning-pot: uint, winning-side: bool, event-id: (string-utf8 100)}))
+                   (winning-data {total-pot: uint, winning-pot: uint, winning-side: bool, market-id: (string-utf8 100)}))
   (let (
     (bet-info (unwrap-panic (map-get? user-bets 
-      {event-id: (get event-id winning-data), user: user})))
+      {market-id: (get market-id winning-data), user: user})))
   )
     (if (is-eq (get vote bet-info) (get winning-side winning-data))
       (let (
@@ -162,35 +162,35 @@
 )
 
 ;; Function to end session and distribute winnings
-(define-public (end-session (event-id (string-utf8 100)))
+(define-public (end-session (market-id (string-utf8 100)))
   (let (
-    (event (unwrap! (map-get? events event-id) ERR-NO-EVENT))
+    (market (unwrap! (map-get? markets market-id) ERR-NO-MARKET))
     (current-height stacks-block-height)
   )
     ;; Only contract owner can end session
     (asserts! (is-eq tx-sender contract-owner) ERR-UNAUTHORIZED)
     
     ;; Check if session has ended
-    (asserts! (not (get isEnded event)) ERR-SESSION-ENDED)
+    (asserts! (not (get isEnded market)) ERR-SESSION-ENDED)
     
     (let (
-      (yes-wins (> (get yesVoters event) (get noVoters event)))
-      (total-pot (+ (get yesPot event) (get noPot event)))
-      (winning-pot (if yes-wins (get yesPot event) (get noPot event)))
-      (all-betters (get betters event))
+      (yes-wins (> (get yesVoters market) (get noVoters market)))
+      (total-pot (+ (get yesPot market) (get noPot market)))
+      (winning-pot (if yes-wins (get yesPot market) (get noPot market)))
+      (all-betters (get betters market))
       (winning-data {
         total-pot: total-pot,
         winning-pot: winning-pot,
         winning-side: yes-wins,
-        event-id: event-id
+        market-id: market-id
       })
     )
       ;; Distribute winnings to all betters
       (map distribute-winnings all-betters (list winning-data))
       
-      ;; Reset event stats
-      (map-set events event-id 
-        (merge event {
+      ;; Reset market stats
+      (map-set markets market-id 
+        (merge market {
           yesVoters: u0,
           noVoters: u0,
           yesPot: u0,
@@ -210,31 +210,31 @@
   )
 )
 
-;; Read-only function to get a specific event
-(define-read-only (get-event (event-id (string-utf8 100)))
-  (map-get? events event-id)
+;; Read-only function to get a specific market
+(define-read-only (get-market (market-id (string-utf8 100)))
+  (map-get? markets market-id)
 )
 
-;; Read-only function to get a user's bet on an event
-(define-read-only (get-user-bet (event-id (string-utf8 100)) (user principal))
-  (map-get? user-bets {event-id: event-id, user: user})
+;; Read-only function to get a user's bet on an market
+(define-read-only (get-user-bet (market-id (string-utf8 100)) (user principal))
+  (map-get? user-bets {market-id: market-id, user: user})
 )
 
-;; Private function to check if an event is not ended
-(define-private (event-not-ended? (event-id (string-utf8 100)))
-  (let ((event (unwrap-panic (map-get? events event-id))))
-    (not (get isEnded event))
+;; Private function to check if an market is not ended
+(define-private (market-not-ended? (market-id (string-utf8 100)))
+  (let ((market (unwrap-panic (map-get? markets market-id))))
+    (not (get isEnded market))
   )
 )
 
-;; Private function to get event data
-(define-private (get-event-data (event-id (string-utf8 100)))
-  (unwrap-panic (map-get? events event-id))
+;; Private function to get market data
+(define-private (get-market-data (market-id (string-utf8 100)))
+  (unwrap-panic (map-get? markets market-id))
 )
 
-;; Function to get all current events that are not ended
-(define-read-only (get-current-events)
-  (let ((current-event-ids (filter event-not-ended? (var-get event-ids))))
-    (map get-event-data current-event-ids)
+;; Function to get all current markets that are not ended
+(define-read-only (get-current-markets)
+  (let ((current-market-ids (filter market-not-ended? (var-get market-ids))))
+    (map get-market-data current-market-ids)
   )
 )

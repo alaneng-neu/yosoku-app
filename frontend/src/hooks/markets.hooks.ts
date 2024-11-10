@@ -11,7 +11,7 @@ export const useGetAllMarkets = async () => {
 
   const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
   const contractName = "prediction-market";
-  const functionName = "get-current-events";
+  const functionName = "get-current-markets";
 
   const call: ClarityValue = await fetchCallReadOnlyFunction({
     contractName,
@@ -40,7 +40,7 @@ export const createMarket = async (formData: FormData) => {
   await openContractCall({
     contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS,
     contractName: "prediction-market",
-    functionName: "add-event",
+    functionName: "add-market",
     functionArgs: [
       Cl.stringUtf8(randomId),
       Cl.stringUtf8(name),
