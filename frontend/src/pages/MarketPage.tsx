@@ -14,6 +14,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
+import { useCurrentUserSession } from "@/hooks/user.hooks";
 
 export default function MarketPage() {
   const { data, isLoading, isError } = useGetAllMarkets();
@@ -22,6 +23,8 @@ export default function MarketPage() {
   const [betAmount, setBetAmount] = useState(1);
   const [betSide, setBetSide] = useState<1 | 0>(1);
   const { mutateAsync: bet } = useBetOnMarket();
+
+  const userSession = useCurrentUserSession();
 
   const [market, setMarket] = useState<Market | null>(null);
 
@@ -50,7 +53,10 @@ export default function MarketPage() {
       formData.append("yesVote", betSide.toString());
       formData.append("betAmount", betAmount.toString());
 
-      await bet(formData);
+      await bet({
+        formData,
+        walletSender: userSession.loadUserData().profile.stxAddress.testnet,
+      });
     } catch (e) {
       console.error(e);
     }
@@ -134,8 +140,7 @@ export default function MarketPage() {
                         : "hover:bg-blue-50"
                     )}
                     disabled={market.isEnded}
-                    onClick={() => setBetSide(1)}
-                  >
+                    onClick={() => setBetSide(1)}>
                     Yes
                   </Button>
                   <Button
@@ -147,8 +152,7 @@ export default function MarketPage() {
                         : "hover:bg-red-50"
                     )}
                     disabled={market.isEnded}
-                    onClick={() => setBetSide(0)}
-                  >
+                    onClick={() => setBetSide(0)}>
                     No
                   </Button>
                 </div>
@@ -158,8 +162,7 @@ export default function MarketPage() {
                 className="w-full"
                 size="lg"
                 disabled={market.isEnded || Number(betAmount) < 1}
-                onClick={handleBet}
-              >
+                onClick={handleBet}>
                 Submit
               </Button>
             </CardContent>

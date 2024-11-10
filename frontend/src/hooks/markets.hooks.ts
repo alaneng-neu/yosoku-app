@@ -12,6 +12,7 @@ import {
   ClarityValue,
   fetchCallReadOnlyFunction,
   ListCV,
+  Pc,
   PostConditionMode,
 } from "@stacks/transactions";
 import {
@@ -101,10 +102,21 @@ export const useCreateMarket = () => {
   });
 };
 
-export const betOnMarket = async (formData: FormData) => {
+export const betOnMarket = async ({
+  formData,
+  walletSender,
+}: {
+  formData: FormData;
+  walletSender: string;
+}) => {
   const marketId = formDataParseString(formData.get("marketId"));
   const yesVote = formDataParseBoolString(formData.get("yesVote"));
   const betAmount = formDataParseString(formData.get("betAmount"));
+
+  const amountInMicroStx = Number(betAmount) * 1_000_000;
+  const postCondition = Pc.principal(walletSender)
+    .willSendEq(amountInMicroStx)
+    .ustx();
 
   await openContractCall({
     contractAddress: import.meta.env.VITE_CONTRACT_ADDRESS,
@@ -113,7 +125,7 @@ export const betOnMarket = async (formData: FormData) => {
     functionArgs: [
       Cl.stringUtf8(marketId),
       Cl.bool(yesVote),
-      Cl.uint(Number(betAmount) * 1_000_000),
+      Cl.uint(amountInMicroStx),
     ],
     network: "devnet",
     appDetails,
@@ -123,7 +135,8 @@ export const betOnMarket = async (formData: FormData) => {
     onCancel: () => {
       throw new Error("Transaction was cancelled");
     },
-    postConditionMode: PostConditionMode.Allow,
+    postConditionMode: PostConditionMode.Deny,
+    postConditions: [postCondition],
   });
 };
 
@@ -132,17 +145,19 @@ export const betOnMarket = async (formData: FormData) => {
  */
 export const useBetOnMarket = () => {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, FormData>({
-    mutationKey: ["markets"],
-    mutationFn: betOnMarket,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["markets"] });
-      window.location.href = "/";
-    },
-    onError: (error) => {
-      toastError(error.message);
-    },
-  });
+  return useMutation<void, Error, { formData: FormData; walletSender: string }>(
+    {
+      mutationKey: ["markets"],
+      mutationFn: betOnMarket,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["markets"] });
+        window.location.href = "/";
+      },
+      onError: (error) => {
+        toastError(error.message);
+      },
+    }
+  );
 };
 
 export const endMarketSession = async (formData: FormData) => {
